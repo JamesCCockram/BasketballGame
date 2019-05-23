@@ -14,6 +14,11 @@ local screenW, screenH, halfW = display.actualContentWidth, display.actualConten
 --draw line behind ball
 local trailprops = {x= 0, y = 0,r = 10}
 
+--Counter
+local goal = 0
+local scoreText = display.newText("Score: ", display.contentCenterX, 25, nativeSystemFont, 25)
+local scoreNumber = display.newText(0, display.contentCenterX, 50, nativeSystemFont, 25)
+
 --background
 local background = display.newImage("wallpaper.png")
 background.x = display.contentCenterX
@@ -98,17 +103,7 @@ function cueShot( event )
 
 	return true	-- Stop further propagation of touch event
 end
---draw line
-local function redraw ()
-    local Trail = display.newCircle( theBall.x + trailprops.x, theBall.y + trailprops.y, trailprops.r)
-    Trail:setFillColor( 0,0.7,1 )
-    transition.to( Trail, {time = 10000, alpha = 0, onComplete = function ()
-        display.remove( Trail )
-    end} )
-    theBall:toFront( )
-end
-Runtime:addEventListener( "enterFrame", redraw ) --draw line
-theBall:addEventListener( "touch", cueShot ) -- Sets event listener to theBall
+
 
 -- grass
 local grass = display.newImageRect( "grass.png", screenW, 40 )
@@ -124,7 +119,7 @@ local leftWall = display.newRect(0,0,1, 1000 )
 local rightWall = display.newRect (_W, 0, 1, 1000)
 local topWall = display.newRect (_W, -200, 100000, 0)
 local basketballTopWall = display.newRect(display.contentWidth - 20, 50 ,40,0)
-local basketballLowerWall = display.newRect(display.contentWidth - 135, _H -125 ,0,180)
+local basketballLowerWall = display.newRect(display.contentWidth - 145, _H -125 ,0,180)
 --walls physics
 physics.addBody(basketballLowerWall,"static", {bounce = 0.1})
 physics.addBody (basketballTopWall, "static", {bounce = 0.1} )
@@ -141,18 +136,35 @@ backboard.fill = {0,0,0}
 physics.addBody (backboard, "static", {bounce = 0.1})
 physics.addBody (hoop, "dynamic", {isSensor= true})
 
---Counter
-local goal = 0
-local scoreText = display.newText("Score: ", display.contentCenterX, 25, nativeSystemFont, 25)
-local scoreNumber = display.newText(0, display.contentCenterX, 50, nativeSystemFont, 25)
+--draw line
+local function redraw ()
+    local Trail = display.newCircle( theBall.x + trailprops.x, theBall.y + trailprops.y, trailprops.r)
+    Trail:setFillColor( 0,0.7,1 )
+    transition.to( Trail, {time = 10000, alpha = 0, onComplete = function ()
+        display.remove( Trail )
+    end} )
+    theBall:toFront( )
+		scoreText:toFront()
+		scoreNumber:toFront()
+
+end
+Runtime:addEventListener( "enterFrame", redraw ) --draw line
+theBall:addEventListener( "touch", cueShot ) -- Sets event listener to theBall
+
+
+
+
 
 local function onLocalCollision( self, event )
     if ( event.phase == "began" ) then
 				goal = goal + 1
 				scoreNumber.text = goal
-        print(goal)
-		end
+
+	elseif (event.phase == "ended") then
+						transition.to(theBall, {x=70, y=_H-40, delay=500,time=500, onComplete=listener})
+	end
 end
+
 
 hoop.collision = onLocalCollision
 hoop:addEventListener( "collision" )
