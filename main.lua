@@ -7,9 +7,16 @@
 -- Your code here
 local physics = require("physics")
 
+--background
+local background = display.newImage("wallpaper.png")
+background.x = display.contentCenterX
+background.y = display.contentCenterY
+
 local _W = display.contentWidth
 local _H = display.contentHeight
 local screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
+ballStartingX = 70
+ballStartingY = _H - 40
 
 --draw line behind ball
 local trailprops = {x= 0, y = 0,r = 10}
@@ -18,15 +25,27 @@ local trailprops = {x= 0, y = 0,r = 10}
 local goal = 0
 local scoreText = display.newText("Score: ", display.contentCenterX, 25, nativeSystemFont, 25)
 local scoreNumber = display.newText(0, display.contentCenterX, 50, nativeSystemFont, 25)
+local SpeedText = display.newText("Speed:", 50, 50)
+local SpeedNumber = display.newText(0,50,70)
 
---background
-local background = display.newImage("wallpaper.png")
-background.x = display.contentCenterX
-background.y = display.contentCenterY
+local DistanceText = display.newText("Distance:", 150, 50)
+local DistanceNumber = display.newText(0, 150, 70)
+
+
+--Distance
+function getDistance (x1,y1,x2,y2)
+	dx = x2-x1
+	dy = y2-y1
+
+	distance = math.sqrt(dy^2 + dx^2)
+	roundedDistance = math.round(distance)
+	print(roundedDistance)
+	DistanceNumber.text = roundedDistance
+end
 
 physics.start()
 
-physics.setDrawMode("hybrid") --Set physics Draw mode
+--physics.setDrawMode("hybrid") --Set physics Draw mode
 physics.setScale( 60 ) -- a value that seems good for small objects (based on playtesting)
 physics.setGravity( 0, 0 ) -- overhead view, therefore no gravity vector
 display.setStatusBar( display.HiddenStatusBar )
@@ -34,7 +53,7 @@ display.setStatusBar( display.HiddenStatusBar )
 --Create theBall
 local ballBody = { density=0.60, friction=1.0, bounce=.7, radius=15 }
 	theBall = display.newImageRect( "ball_white.png", 50, 50)
-	theBall.x = 70; theBall.y = _H - 40
+	theBall.x = ballStartingX; theBall.y = ballStartingY
 	physics.addBody( theBall, ballBody )
 	theBall.linearDamping = 0.3
 	theBall.angularDamping = 0.8
@@ -98,6 +117,8 @@ function cueShot( event )
 
 			-- Strike the ball!
 			t:applyForce( (t.x - event.x), (t.y - event.y), t.x, t.y )
+			Runtime:addEventListener("enterFrame", theBallSpeed) -- speed
+
 		end
 	end
 
@@ -148,22 +169,27 @@ local function redraw ()
 		scoreNumber:toFront()
 
 end
+
+function theBallSpeed ()
+	velocity = theBall:getLinearVelocity()
+	velocity = math.round(velocity)
+	SpeedNumber.text = velocity
+end
+
 Runtime:addEventListener( "enterFrame", redraw ) --draw line
 theBall:addEventListener( "touch", cueShot ) -- Sets event listener to theBall
-
-
-
-
 
 local function onLocalCollision( self, event )
     if ( event.phase == "began" ) then
 				goal = goal + 1
 				scoreNumber.text = goal
+				getDistance(ballStartingX, ballStartingY, theBall.x, theBall.y)
 
 	elseif (event.phase == "ended") then
-						transition.to(theBall, {x=70, y=_H-40, delay=500,time=500, onComplete=listener})
+						transition.to(theBall, {x = ballStartingX, y = ballStartingY, delay=2500,time=500, onComplete=listener})
 	end
 end
+
 
 
 hoop.collision = onLocalCollision
